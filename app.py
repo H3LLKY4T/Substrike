@@ -8,7 +8,7 @@ import threading
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
-
+                                                                  #Substrike-stable v0.5-beta 
 scan_state = {
     "total_subdomains": 0,
     "vulnerable": 0,
