@@ -30,6 +30,9 @@ cd Substrike
 ```
 gunicorn -b 0.0.0.0:5000 app:app
 ```
+OR 
+```
+python3 app.py```
 Access the web UI at: http://127.0.0.1:5000
 
 - Login: Default credentials are **admin:admin@123**.
