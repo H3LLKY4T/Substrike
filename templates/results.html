@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000">
+      <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <title>Subdomain Takeover Results</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+.filter-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;  
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: end;  
+}
+
+.filter-container .form-select,
+.filter-container .apply-filter-btn {
+  width: 100%;
+  padding: 12px;  
+  height: 45px;  
+  font-size: 1rem;  
+}
+
+.apply-filter-btn {
+  background-color: #64a803;
+  padding: 4px 8px;  
+  text-align: center;
+  border-radius: 8px;
+  font-size: 0.75rem; 
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  height: 45px;  
+  width: 100%; 
+  transition: background-color 0.3s ease;  
+}
+
+.apply-filter-btn:hover {
+  background-color: #385e02;  
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  z-index: 1000;
+  font-size: 0.9rem;
+}
+
+.header img {
+  max-width: 230px;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.ios-toggle {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ios-toggle input {
+  display: none;
+}
+
+.ios-toggle label {
+  width: 50px;
+  height: 28px;
+  background-color: #3d3d3d;
+  border-radius: 30px;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.ios-toggle input:checked + label {
+  background-color: #64a803;
+}
+
+.ios-toggle input:checked + label:before {
+  transform: translateX(22px);
+}
+
+.ios-toggle label:before {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: white;
+  transition: transform 0.3s ease;
+  left: 4px;
+  top: 3px;
+}
+
+.ios-toggle-text {
+  margin-left: 12px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.ios-toggle input:checked ~ .ios-toggle-text {
+  color: #64a803;
+}
+
+@media (max-width: 640px) {
+  .filter-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .overflow-x-auto {
+    overflow-x: scroll;
+  }
+
+  table {
+    min-width: 600px;
+  }
+}
+
+
+@media (max-width: 640px) {
+
+  .flex.flex-wrap {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .flex.flex-wrap button {
+    width: auto; 
+  }
+
+  .filter-container .refresh-btn {
+    display: hide;
+  }
+}
+
+
+  </style>
+</head>
+
+<body class="bg-neutral-900 font-['Inter'] text-neutral-300">
+  <section id="subdomain-results" class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+    <div class="header">
+    <div class="logo-text">
+        <img src="../static/logo.png" alt="Substrike Logo">
+    </div>
+    
+</div>
+      <div class="mb-12"><br>
+        <h2 class="font-['Montserrat'] text-3xl font-bold text-white mb-4"></h2><br>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <button class="inline-flex items-center px-4 py-2 bg-neutral-800 text-neutral-300 rounded-xl hover:bg-neutral-700 transition-colors border border-neutral-700" onclick="window.location.reload();">
+  Refresh Page
+</button>
+
+          <div class="flex gap-4">
+            <button class="inline-flex items-center px-4 py-2 bg-neutral-800 text-neutral-300 rounded-xl hover:bg-neutral-700 transition-colors border border-neutral-700" onclick="downloadCSV()">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              Export CSV
+            </button>
+            <button class="inline-flex items-center px-4 py-2 bg-lime-600 text-white rounded-xl hover:bg-lime-700 transition-colors" onclick="window.location.href='/dashboard'">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              New Scan
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <form method="POST" class="mb-4">
+  <div class="filter-container">
+    <div>
+      <label for="status_filter" class="form-label text-sm text-neutral-400">Filter by Status</label>
+      <select name="status_filter" class="form-select bg-neutral-800 text-neutral-300 border border-neutral-700 rounded-xl">
+        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+        <option value="Resolved" {% if status_filter == 'Resolved' %}selected{% endif %}>Resolved</option>
+        <option value="NXDOMAIN" {% if status_filter == 'NXDOMAIN' %}selected{% endif %}>NXDOMAIN</option>
+        <option value="Error" {% if status_filter == 'Error' %}selected{% endif %}>Error</option>
+      </select>
+    </div>
+    <div>
+      <label for="vulnerability_filter" class="form-label text-sm text-neutral-400">Filter by Vulnerability</label>
+      <select name="vulnerability_filter" class="form-select bg-neutral-800 text-neutral-300 border border-neutral-700 rounded-xl">
+        <option value="all" {% if vulnerability_filter == 'all' %}selected{% endif %}>All</option>
+        <option value="Vulnerable" {% if vulnerability_filter == 'Vulnerable' %}selected{% endif %}>Vulnerable</option>
+        <option value="Safe" {% if vulnerability_filter == 'Safe' %}selected{% endif %}>Safe</option>
+        <option value="Unknown" {% if vulnerability_filter == 'Unknown' %}selected{% endif %}>Unknown</option>
+      </select>
+    </div>
+    <button type="submit" class="apply-filter-btn">Apply Filters</button>
+    <div class="ios-toggle ms-3">
+      <input type="checkbox" id="hideCNAME" class="ios-toggle-input" onchange="toggleCNAMEVisibility()">
+      <label for="hideCNAME" class="ios-toggle-label"></label>
+      <span class="ios-toggle-text">Hide N/A</span>
+    </div>
+  </div>
+</form>
+
+      <div class="mb-6">
+        <input type="text" id="search-bar" class="w-full p-3 bg-neutral-800 text-neutral-300 rounded-xl border border-neutral-700" placeholder="Search Cloud Service..." onkeyup="searchResults()">
+      </div>
+      
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-neutral-800 p-6 rounded-2xl border border-neutral-700">
+          <div class="text-neutral-400 mb-2">Total Subdomains</div>
+          <div class="text-3xl font-bold text-white">{{ total_subdomains }}</div>
+        </div>
+        <div class="bg-neutral-800 p-6 rounded-2xl border border-neutral-700">
+          <div class="text-neutral-400 mb-2">Vulnerable</div>
+          <div class="text-3xl font-bold text-red-500">{{ vulnerable }}</div>
+        </div>
+        <div class="bg-neutral-800 p-6 rounded-2xl border border-neutral-700">
+          <div class="text-neutral-400 mb-2">Active</div>
+          <div class="text-3xl font-bold text-green-500">{{ active}}</div>
+        </div>
+        <div class="bg-neutral-800 p-6 rounded-2xl border border-neutral-700">
+          <div class="text-neutral-400 mb-2">Inactive</div>
+          <div class="text-3xl font-bold text-yellow-500">{{ inactive }}</div>
+        </div>
+      </div>
+<div class="bg-neutral-800 rounded-2xl border border-neutral-700 overflow-hidden">
+  <div class="p-6 border-b border-neutral-700">
+    <h3 class="text-xl font-semibold text-white">Detailed Results</h3>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-neutral-700">
+      <thead class="bg-neutral-900">
+        <tr>
+          <th class="px-6 py-4 text-left text-sm font-medium text-neutral-400">Subdomain</th>
+          <th class="px-6 py-4 text-left text-sm font-medium text-neutral-400">Vulnerability</th>
+          <th class="px-6 py-4 text-left text-sm font-medium text-neutral-400">CNAME</th>
+          <th class="px-6 py-4 text-left text-sm font-medium text-neutral-400">Status</th>
+          <th class="px-6 py-4 text-left text-sm font-medium text-neutral-400">Active/Inactive</th> 
+        </tr>
+      </thead>
+      <tbody id="results-body" class="divide-y divide-neutral-700">
+  {% if loading %}
+    {% for _ in range(5) %}
+      <tr class="animate-pulse">
+        <td class="px-6 py-4">
+          <div class="h-4 bg-neutral-700 rounded w-3/4"></div>
+        </td>
+        <td class="px-6 py-4">
+          <div class="h-4 bg-neutral-700 rounded w-1/2"></div>
+        </td>
+        <td class="px-6 py-4">
+          <div class="h-4 bg-neutral-700 rounded w-3/5"></div>
+        </td>
+        <td class="px-6 py-4">
+          <div class="h-4 bg-neutral-700 rounded w-1/3"></div>
+        </td>
+        <td class="px-6 py-4">
+          <div class="h-4 bg-neutral-700 rounded w-1/4"></div>
+        </td>
+      </tr>
+    {% endfor %}
+  {% else %}
+    {% for subdomain, cname, status, is_vulnerable, is_active in results %}
+      <tr class="hover:bg-neutral-750">
+        <td class="px-6 py-4 text-white">{{ subdomain }}</td>
+        <td class="px-6 py-4">
+          <span class="px-3 py-1 text-sm rounded-full {% if is_vulnerable == 'Vulnerable' %} bg-red-500/20 text-red-400 {% else %} bg-green-500/20 text-green-400 {% endif %}">
+            {{ is_vulnerable }}
+          </span>
+        </td>
+        <td class="px-6 py-4 text-sm text-neutral-300">{{ cname }}</td>
+        <td class="px-6 py-4 text-sm text-neutral-300">{{ status }}</td>
+        <td class="px-6 py-4 text-sm text-neutral-300">
+          <span class="px-3 py-1 text-sm rounded-full {% if is_active == 'Active' %} bg-green-500/20 text-green-400 {% else %} bg-yellow-500/20 text-yellow-400 {% endif %}">
+            {{ is_active }}
+          </span>
+        </td>
+      </tr>
+    {% endfor %}
+  {% endif %}
+</tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mt-6 flex items-center justify-between">
+  <div class="text-sm text-neutral-400">
+    {% set start_result = (page_number - 1) * 10 + 1 %}
+    {% set end_result = start_result + results|length - 1 %}
+    <div class="text-sm text-neutral-400">
+      Showing {{ start_result }} to {{ end_result }} of {{ total_subdomains }} results
+    </div>
+  </div>
+  <div class="flex gap-2">
+    {% if page_number > 1 %}
+      <a href="{{ url_for('results', page=page_number - 1) }}" class="px-4 py-2 bg-neutral-800 text-neutral-300 rounded-xl hover:bg-neutral-700 transition-colors border border-neutral-700">
+        Previous
+      </a>
+    {% else %}
+      <span class="px-4 py-2 bg-neutral-700 text-neutral-500 rounded-xl border border-neutral-700 cursor-not-allowed">
+        Previous
+      </span>
+    {% endif %}
+
+    <span class="text-sm text-neutral-400 flex items-center justify-center">
+      Page {{ page_number }} of {{ total_pages }}
+    </span>
+
+    {% if page_number < total_pages %}
+      <a href="{{ url_for('results', page=page_number + 1) }}" class="px-4 py-2 bg-neutral-800 text-neutral-300 rounded-xl hover:bg-neutral-700 transition-colors border border-neutral-700">
+        Next
+      </a>
+    {% else %}
+      <span class="px-4 py-2 bg-neutral-700 text-neutral-500 rounded-xl border border-neutral-700 cursor-not-allowed">
+        Next
+      </span>
+    {% endif %}
+  </div>
+</div>
+
+
+    </div>
+  </section>
+
+  <script>
+  
+    document.addEventListener("DOMContentLoaded", function () {
+    const allResults = {{ all_results | tojson }};  
+    const resultsBody = document.getElementById("results-body");
+    
+    function renderResults(results) {
+        resultsBody.innerHTML = results.map(([subdomain, cname, status, is_vulnerable, is_active]) => `
+            <tr class="hover:bg-neutral-750">
+                <td class="px-6 py-4 text-sm text-white">${subdomain}</td>
+                <td class="px-6 py-4">
+                    <span class="px-3 py-1 text-sm rounded-full ${is_vulnerable === 'Vulnerable' ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}">
+                        ${is_vulnerable}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-neutral-300">${cname}</td>
+                <td class="px-6 py-4 text-sm text-neutral-300">${status}</td>
+                <td class="px-6 py-4 text-sm text-neutral-300">
+                    <span class="px-3 py-1 text-sm rounded-full ${is_active === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}">
+                        ${is_active}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    renderResults(allResults);
+
+    document.getElementById('search-bar').addEventListener('input', function() {
+        let filter = this.value.toUpperCase();
+        let filteredResults = allResults.filter(result => result[0].toUpperCase().includes(filter) || result[1].toUpperCase().includes(filter));
+        renderResults(filteredResults);
+    });
+
+    document.querySelector('form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        let statusFilter = document.querySelector('[name="status_filter"]').value;
+        let vulnerabilityFilter = document.querySelector('[name="vulnerability_filter"]').value;
+
+        let filteredResults = allResults.filter(result => {
+            let matchesStatus = statusFilter === 'all' || result[2] === statusFilter;
+            let matchesVulnerability = vulnerabilityFilter === 'all' || result[3] === vulnerabilityFilter;
+            return matchesStatus && matchesVulnerability;
+        });
+
+        renderResults(filteredResults);
+    });
+
+    document.getElementById('hideCNAME').addEventListener('change', function() {
+        let filteredResults = allResults.filter(result => {
+            return !(this.checked && result[1] === 'N/A');
+        });
+        renderResults(filteredResults);
+    });
+});
+
+
+    function searchResults() {
+    let filter = document.getElementById('search-bar').value.toUpperCase();
+    let rows = document.querySelectorAll('#results-body tr');
+    rows.forEach(row => {
+        let cnameCell = row.cells[2];
+        let cname = cnameCell.textContent || cnameCell.innerText;
+        if (cname.toUpperCase().indexOf(filter) > -1) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+    
+    function downloadCSV() {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    let rows = document.querySelectorAll("#results-body tr");
+    
+    csvContent += "Subdomain,Vulnerability,CNAME,Status,Active/Inactive\n";
+
+    rows.forEach(row => {
+        let cols = row.querySelectorAll("td");
+        let rowData = [];
+        
+        let cname = cols[2].innerText.trim();
+        if (document.getElementById("hideCNAME").checked && cname === "N/A") {
+            return; 
+        }
+
+        cols.forEach(col => rowData.push(col.innerText.trim()));
+        csvContent += rowData.join(",") + "\n";
+    });
+     
+     
+     function checkScanStatus() {
+        fetch('/scan_status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.progress === 100 && data.time_left === "0:00:00") {
+                    window.location.reload();
+                }
+            })
+            .catch(error => console.error('Error fetching scan status:', error));
+    }
+
+    setInterval(checkScanStatus, 3000);
+
+    let encodedUri = encodeURI(csvContent);
+    let link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Substrike_Results.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+if (!localStorage.getItem('reloaded')) {
+    setTimeout(function() {
+      window.location.reload();
+    }, 1000); 
+
+    localStorage.setItem('reloaded', 'true');
+  }
+
+document.addEventListener("DOMContentLoaded", function () {
+    let resultsBody = document.getElementById("results-body");
+
+    resultsBody.innerHTML = `
+        ${[...Array(5)].map(() => `
+            <tr class="animate-pulse">
+                <td class="px-6 py-4"><div class="h-4 bg-neutral-700 rounded w-3/4"></div></td>
+                <td class="px-6 py-4"><div class="h-4 bg-neutral-700 rounded w-1/2"></div></td>
+                <td class="px-6 py-4"><div class="h-4 bg-neutral-700 rounded w-3/5"></div></td>
+                <td class="px-6 py-4"><div class="h-4 bg-neutral-700 rounded w-1/3"></div></td>
+                <td class="px-6 py-4"><div class="h-4 bg-neutral-700 rounded w-1/4"></div></td>
+            </tr>
+        `).join('')}
+    `;
+
+    setTimeout(() => {
+        fetch('/get_results')
+            .then(response => response.json())
+            .then(data => {
+                let rows = data.results.map(([subdomain, cname, status, is_vulnerable, is_active]) => `
+                    <tr class="hover:bg-neutral-750">
+                        <td class="px-6 py-4 text-sm text-white">${subdomain}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 text-sm rounded-full ${is_vulnerable === 'Vulnerable' ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}">
+                                ${is_vulnerable}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-neutral-300">${cname}</td>
+                        <td class="px-6 py-4 text-sm text-neutral-300">${status}</td>
+                        <td class="px-6 py-4 text-sm text-neutral-300">
+                            <span class="px-3 py-1 text-sm rounded-full ${is_active === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}">
+                                ${is_active}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+
+                resultsBody.innerHTML = rows;
+            })
+            .catch(error => console.error("Error fetching data:", error));
+    }, 4000); 
+});
+  </script>
+</body>
+</html>
+

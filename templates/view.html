@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000">
+  <title>View Result</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+          <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <style>
+    .filter-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;  
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: end;  
+}
+
+.filter-container .form-select,
+.filter-container .apply-filter-btn {
+  width: 100%;
+  padding: 12px; 
+  height: 45px;  
+  font-size: 1rem;  
+}
+
+.apply-filter-btn {
+  background-color: #64a803;
+  padding: 4px 8px;  
+  text-align: center;
+  border-radius: 8px;
+  font-size: 0.75rem;  
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  height: 45px;  
+  width: 100%;  
+  transition: background-color 0.3s ease;  
+}
+
+.apply-filter-btn:hover {
+  background-color: #385e02;  
+}
+    
+    
+    .header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  z-index: 1000;
+  font-size: 0.9rem;
+}
+
+.header img {
+  max-width: 230px;
+  max-height: 60px;
+  object-fit: contain;
+} 
+
+.ios-toggle {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ios-toggle input {
+  display: none;
+}
+
+.ios-toggle label {
+  width: 50px;
+  height: 28px;
+  background-color: #3d3d3d;
+  border-radius: 30px;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.ios-toggle input:checked + label {
+  background-color: #64a803;
+}
+
+.ios-toggle input:checked + label:before {
+  transform: translateX(22px);
+}
+
+.ios-toggle label:before {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: white;
+  transition: transform 0.3s ease;
+  left: 4px;
+  top: 3px;
+}
+
+.ios-toggle-text {
+  margin-left: 12px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.ios-toggle input:checked ~ .ios-toggle-text {
+  color: #64a803;
+}
+  </style>
+</head>
+
+<body class="bg-neutral-900 font-['Inter'] text-neutral-300">
+  <section id="subdomain-results" class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="header">
+    <div class="logo-text">
+        <img src="../static/logo.png" alt="Substrike Logo">
+    </div>
+    </div>
+      <div class="mb-12"><br><br>
+        <h2 class="font-['Montserrat'] text-3xl font-bold text-white mb-4">{{ file_name }} - Scan Results</h2><br>
+
+        <div class="flex flex-wrap items-center justify-between gap-4">
+  <button onclick="deleteScan('{{ file_name }}')" 
+          class="inline-flex items-center px-4 py-2 bg-neutral-800 text-neutral-300 rounded-xl hover:bg-neutral-700 transition-colors border border-neutral-700">
+    Delete Result
+  </button>
+
+          <div class="flex gap-4">
+            <button class="inline-flex items-center px-4 py-2 bg-neutral-800 text-neutral-300 rounded-xl hover:bg-neutral-700 transition-colors border border-neutral-700" onclick="downloadCSV()">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              Export CSV
+            </button>
+            <button class="inline-flex items-center px-4 py-2 bg-lime-600 text-white rounded-xl hover:bg-lime-700 transition-colors" onclick="window.location.href='/dashboard'">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              New Scan
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <form method="POST" class="mb-4">
+  <div class="filter-container">
+    <div>
+      <label for="status_filter" class="form-label text-sm text-neutral-400">Filter by Status</label>
+      <select name="status_filter" class="form-select bg-neutral-800 text-neutral-300 border border-neutral-700 rounded-xl">
+        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+        <option value="Resolved" {% if status_filter == 'Resolved' %}selected{% endif %}>Resolved</option>
+        <option value="NXDOMAIN" {% if status_filter == 'NXDOMAIN' %}selected{% endif %}>NXDOMAIN</option>
+        <option value="Error" {% if status_filter == 'Error' %}selected{% endif %}>Error</option>
+      </select>
+    </div>
+    <div>
+      <label for="vulnerability_filter" class="form-label text-sm text-neutral-400">Filter by Vulnerability</label>
+      <select name="vulnerability_filter" class="form-select bg-neutral-800 text-neutral-300 border border-neutral-700 rounded-xl">
+        <option value="all" {% if vulnerability_filter == 'all' %}selected{% endif %}>All</option>
+        <option value="Vulnerable" {% if vulnerability_filter == 'Vulnerable' %}selected{% endif %}>Vulnerable</option>
+        <option value="Safe" {% if vulnerability_filter == 'Safe' %}selected{% endif %}>Safe</option>
+        <option value="Unknown" {% if vulnerability_filter == 'Unknown' %}selected{% endif %}>Unknown</option>
+      </select>
+    </div>
+    <button type="submit" class="apply-filter-btn">Apply Filters</button>
+
+    <div class="ios-toggle ms-3">
+      <input type="checkbox" id="hideCNAME" class="ios-toggle-input" onchange="toggleCNAMEVisibility()">
+      <label for="hideCNAME" class="ios-toggle-label"></label>
+      <span class="ios-toggle-text">Hide N/A</span>
+    </div>
+  </div>
+</form>
+
+      <div class="mb-6">
+        <input type="text" id="search-bar" class="w-full p-3 bg-neutral-800 text-neutral-300 rounded-xl border border-neutral-700" placeholder="Search Cloud Service..." onkeyup="searchResults()">
+      </div>
+
+      <div class="bg-neutral-800 rounded-2xl border border-neutral-700 overflow-hidden">
+        <div class="p-6 border-b border-neutral-700">
+          <h3 class="text-xl font-semibold text-white">Detailed Results</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-neutral-700">
+            <thead class="bg-neutral-900">
+              <tr>
+                <th class="px-6 py-4 text-left text-sm font-medium text-neutral-400">Subdomain</th>
+                <th class="px-6 py-4 text-left text-sm font-medium text-neutral-400">Vulnerability</th>
+                <th class="px-6 py-4 text-left text-sm font-medium text-neutral-400">CNAME</th>
+                <th class="px-6 py-4 text-left text-sm font-medium text-neutral-400">Status</th>
+                <th class="px-6 py-4 text-left text-sm font-medium text-neutral-400">Active/Inactive</th>
+              </tr>
+            </thead>
+            <tbody id="results-body" class="divide-y divide-neutral-700">
+              {% for subdomain, cname, status, is_vulnerable, is_active in results %}
+                <tr class="hover:bg-neutral-750">
+                  <td class="px-6 py-4 text-sm text-white">{{ subdomain }}</td>
+                  <td class="px-6 py-4">
+                    <span class="px-3 py-1 text-sm rounded-full {% if is_vulnerable == 'Vulnerable' %} bg-red-500/20 text-red-400 {% else %} bg-green-500/20 text-green-400 {% endif %}">
+                      {{ is_vulnerable }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-neutral-300">{{ cname }}</td>
+                  <td class="px-6 py-4 text-sm text-neutral-300">{{ status }}</td>
+                  <td class="px-6 py-4 text-sm text-neutral-300">
+                    <span class="px-3 py-1 text-sm rounded-full {% if is_active == 'Active' %} bg-green-500/20 text-green-400 {% else %} bg-yellow-500/20 text-yellow-400 {% endif %}">
+                      {{ is_active }}
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+<div class="mt-6 flex items-center justify-between">
+  <div class="text-sm text-neutral-400">
+    {% set start_result = (page_number - 1) * 10 + 1 %}
+    {% set end_result = start_result + results|length - 1 %}
+    Showing {{ start_result }} to {{ end_result }} of {{ total_results }} results
+  </div>
+
+  <div class="flex space-x-2">
+    {% if page_number > 1 %}
+      <a href="?page={{ page_number - 1 }}" class="px-4 py-2 bg-neutral-800 text-neutral-300 rounded-xl hover:bg-neutral-700 transition-colors border border-neutral-700">
+        Previous
+      </a>
+    {% endif %}
+
+    {% set start_page = [1, page_number - 1]|max %}
+    {% set end_page = [total_pages, start_page + 2]|min %}
+
+    {% for i in range(start_page, end_page + 1) %}
+      <a href="?page={{ i }}" class="px-4 py-2 {% if i == page_number %}bg-lime-600 text-white{% else %}bg-neutral-800 text-neutral-300 hover:bg-neutral-700{% endif %} rounded-xl transition-colors border border-neutral-700">
+        {{ i }}
+      </a>
+    {% endfor %}
+
+    {% if page_number < total_pages %}
+      <a href="?page={{ page_number + 1 }}" class="px-4 py-2 bg-neutral-800 text-neutral-300 rounded-xl hover:bg-neutral-700 transition-colors border border-neutral-700">
+        Next
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+
+
+    
+  </section>
+
+  <script>
+  
+    document.getElementById("username").addEventListener("click", function() {
+    const logoutButton = document.getElementById("logout-btn");
+    logoutButton.style.display = logoutButton.style.display === 'inline-block' ? 'none' : 'inline-block';
+});
+  
+    function searchResults() {
+      let filter = document.getElementById('search-bar').value.toUpperCase();
+      let rows = document.querySelectorAll('#results-body tr');
+      rows.forEach(row => {
+        let cnameCell = row.cells[2];
+        let cname = cnameCell.textContent || cnameCell.innerText;
+        if (cname.toUpperCase().indexOf(filter) > -1) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    }
+  
+    function downloadCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,";
+      let rows = document.querySelectorAll("#results-body tr");
+
+      csvContent += "Subdomain,Vulnerability,CNAME,Status,Active/Inactive\n";
+
+      rows.forEach(row => {
+        let cols = row.querySelectorAll("td");
+        let rowData = [];
+        cols.forEach(col => rowData.push(col.innerText.trim()));
+        csvContent += rowData.join(",") + "\n";
+      });
+
+      let encodedUri = encodeURI(csvContent);
+      let link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "Substrike_Results.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    
+    function deleteScan(filename) {
+    if (confirm("Are you sure you want to delete this scan result?")) {
+      fetch(`/delete_scan/${filename}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert("Scan result deleted successfully.");
+            window.location.href = "/dashboard"; 
+          } else {
+            alert("Error deleting scan result.");
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+  }
+    
+    function toggleCNAMEVisibility() {
+      let hideNACheckbox = document.getElementById('hideCNAME');
+      let rows = document.querySelectorAll('#results-body tr');
+      rows.forEach(row => {
+        let cnameCell = row.cells[2];
+        if (hideNACheckbox.checked && cnameCell.textContent.trim() === "N/A") {
+          row.style.display = "none";
+        } else {
+          row.style.display = "";
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
+

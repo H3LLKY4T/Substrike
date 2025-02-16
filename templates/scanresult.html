@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Records</title>
+            <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <meta name="theme-color" content="#000">
+    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" as="style">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  z-index: 1000;
+  font-size: 0.9rem;
+}
+
+.header img {
+  max-width: 230px;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.username {
+  font-family: 'Montserrat', sans-serif;
+  margin-right: 10px;
+  cursor: pointer;
+  font-weight: medium;
+  font-size: 0.8rem;  
+  color: #fff;  
+}
+
+
+.logout-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logout-btn {
+  background-color: #1b0252;
+  color: white;
+  border: none;
+  padding: 5px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .filter-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .overflow-x-auto {
+    overflow-x: scroll;
+  }
+
+  table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 640px) {
+  .flex.flex-wrap {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .flex.flex-wrap button {
+    width: auto; 
+  }
+
+  .filter-container .refresh-btn {
+    display: hide;
+  }
+}  
+      </style>
+    
+</head>
+<body class="bg-neutral-900 text-white font-[Inter]">
+<div class="relative z-10 max-w-4xl mx-auto">
+    <div class="header">
+    <div class="logo-text">
+        <img src="../static/logo.png" alt="Substrike Logo">
+    </div>
+    
+</div><br><br><br><br><br>
+
+<section id="dns-records" class="min-h-screen p-8 relative overflow-hidden">
+    
+    <div class="relative z-10 max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h2 class="text-2xl font-bold">DNS Records</h2>
+                <p class="text-neutral-400">{{ domain }}</p>
+            </div>
+            <a href="{{ url_for('dashboard') }}" class="px-4 py-2 bg-lime-600 hover:bg-lime-700 rounded-lg transition-colors">
+    Back to Home
+</a>
+
+        </div>
+        <div class="grid grid-cols-1 gap-6">
+    <div class="bg-neutral-800/50 backdrop-blur-lg rounded-xl border border-neutral-700/30 p-6">
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-lg font-medium">CNAME Record</h3>
+            <span class="px-3 py-1 bg-lime-500/20 text-lime-400 rounded-full text-sm">Default</span>
+        </div>
+        <div class="bg-neutral-700/30 rounded-lg p-4">
+            {% if results['CNAME'] %}
+                <p class="font-mono text-neutral-300">{{ results['CNAME'] }}</p>
+            {% else %}
+                <p class="font-mono text-green-400">Subdomain is safe</p>
+            {% endif %}
+        </div>
+
+        {% if vulnerable %}
+        <div class="mt-4 flex items-center">
+            <div class="flex-shrink-0 w-2 h-2 bg-red-400 rounded-full mr-2"></div>
+            <p class="text-sm text-red-400">Vulnerable to Subdomain Takeover</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if results['A'] and results['A'] != results['CNAME'] %}
+    <div class="bg-neutral-800/50 backdrop-blur-lg rounded-xl border border-neutral-700/30 p-6">
+        <h3 class="text-lg font-medium mb-4">A Record</h3>
+        <div class="bg-neutral-700/30 rounded-lg p-4">
+            <p class="font-mono text-neutral-300">A Record: {{ results['A'] }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if results['SOA'] and results['SOA'] != results['CNAME'] %}
+    <div class="bg-neutral-800/50 backdrop-blur-lg rounded-xl border border-neutral-700/30 p-6">
+        <h3 class="text-lg font-medium mb-4">SOA Record</h3>
+        <div class="bg-neutral-700/30 rounded-lg p-4">
+            <p class="font-mono text-neutral-300">SOA Record: {{ results['SOA'] }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if results['TXT'] and results['TXT'] != results['CNAME'] %}
+    <div class="bg-neutral-800/50 backdrop-blur-lg rounded-xl border border-neutral-700/30 p-6">
+        <h3 class="text-lg font-medium mb-4">TXT Record</h3>
+        <div class="bg-neutral-700/30 rounded-lg p-4">
+            <p class="font-mono text-neutral-300">TXT Record: {{ results['TXT'] }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if results['AAAA'] and results['AAAA'] != results['CNAME'] %}
+    <div class="bg-neutral-800/50 backdrop-blur-lg rounded-xl border border-neutral-700/30 p-6">
+        <h3 class="text-lg font-medium mb-4">AAAA Record</h3>
+        <div class="bg-neutral-700/30 rounded-lg p-4">
+            <p class="font-mono text-neutral-300">AAAA Record: {{ results['AAAA'] }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if results['NS'] and results['NS'] != results['CNAME'] %}
+    <div class="bg-neutral-800/50 backdrop-blur-lg rounded-xl border border-neutral-700/30 p-6">
+        <h3 class="text-lg font-medium mb-4">NS Record</h3>
+        <div class="bg-neutral-700/30 rounded-lg p-4">
+            <p class="font-mono text-neutral-300">NS Record: {{ results['NS'] }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+    </div>
+</section>
+
+</body>
+</html>
+

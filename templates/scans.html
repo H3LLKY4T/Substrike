@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000">
+        <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>Scanning Progress</title>
+    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" as="style">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  z-index: 1000;
+  font-size: 0.9rem;
+}
+
+.header img {
+  max-width: 230px;
+  max-height: 60px;
+  object-fit: contain;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.username {
+  font-family: 'Montserrat', sans-serif;
+  margin-right: 10px;
+  cursor: pointer;
+  font-weight: medium;
+  font-size: 0.8rem;  
+  color: #fff;  
+}
+
+
+.logout-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logout-btn {
+  background-color: #1b0252;
+  color: white;
+  border: none;
+  padding: 5px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+        .progress-bar {
+            height: 100%;
+            line-height: 30px;
+            color: white;
+            background-color: #64a803;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 25px;
+            transition: width 1s ease-in-out;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body class="bg-neutral-900 font-sans">
+    <section id="scanning-progress" class="min-h-screen bg-neutral-900 py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+             <div class="header">
+    <div class="logo-text">
+        <img src="../static/logo.png" alt="Substrike Logo">
+    </div>
+</div>
+
+            <div class="text-center mb-12">
+                <h2 class="font-['Montserrat'] text-3xl font-bold text-white mb-4">
+
+                </h2>
+                <p class="text-neutral-300"></p><br><br>
+            </div>
+
+            <div class="bg-neutral-800 rounded-2xl p-6 border border-neutral-700">
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-lg font-semibold text-white">Overall Progress</span>
+                        <span id="progress-text" class="text-lime-400">0%</span>
+                    </div>
+                    <div class="w-full bg-neutral-700 rounded-full h-4">
+                        <div id="progress-bar" class="progress-bar h-4 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-neutral-300">Current Task</span>
+                        <span class="px-3 py-1 bg-lime-600/20 text-lime-400 rounded-full text-sm">
+                            In Progress
+                        </span>
+                    </div>
+                    <p class="text-white font-medium" id="current-task">Analyzing Subdomain vulnerabilities</p>
+                    <p class="text-lime-400 text-sm mt-1" id="current-subdomain">Processing example.com/subdomain-3</p>
+                </div>
+
+                <div class="space-y-4">
+    <div id="subdomain-enumeration" class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl border border-neutral-700">
+        <span class="text-neutral-300">Verifying Information</span>
+        <div class="flex items-center space-x-3">
+            <div class="w-5 h-5 border-2 border-neutral-700 rounded-full"></div>
+        </div>
+    </div>
+
+    <div id="dns-resolution" class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl border border-neutral-700">
+        <span class="text-neutral-300">Gathering Subdomain Data</span>
+        <div class="flex items-center space-x-3">
+            <div class="w-5 h-5 border-2 border-neutral-700 rounded-full"></div>
+        </div>
+    </div>
+
+    <div id="vulnerability-analysis" class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl border border-neutral-700">
+        <span class="text-neutral-300">Identifying Potential Takeovers</span>
+        <div class="flex items-center space-x-3">
+            <div class="w-5 h-5 border-2 border-neutral-700 rounded-full"></div>
+        </div>
+    </div>
+</div>
+
+
+                <div class="grid grid-cols-3 gap-4 mt-8">
+    <div class="bg-neutral-900 p-4 rounded-xl border border-neutral-700">
+        <div class="text-sm text-neutral-400">Domains Scanned</div>
+        <div id="domains-scanned" class="text-xl font-bold text-white mt-1">0</div>
+    </div>
+    <div class="bg-neutral-900 p-4 rounded-xl border border-neutral-700">
+    <div class="text-sm text-neutral-400">Time Elapsed</div>
+    <div id="elapsed-time" class="text-xl font-bold text-white mt-1">00:00</div>
+</div>
+    <div class="bg-neutral-900 p-4 rounded-xl border border-neutral-700">
+        <div class="text-sm text-neutral-400">Domains Left</div> 
+        <div id="domains-left" class="text-xl font-bold text-white mt-1">0</div> 
+    </div>
+</div>
+
+                <div class="w-full mt-8 flex gap-4">
+    <button class="flex-1 bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-4 px-6 rounded-xl transition-colors" onclick="cancelScan()">
+        Cancel Scan
+    </button>
+    <button class="flex-1 bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-4 px-6 rounded-xl transition-colors" onclick="window.location.href='/dashboard'">
+    Minimize Scan
+</button>
+</div>
+
+            </div>
+
+            <div class="mt-8 text-center">
+                <p class="text-neutral-400">
+                    Estimated time remaining: <span id="estimated-time" class="text-white font-medium">Calculating...</span>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+    function updateElapsedTime() {
+        fetch("/scan_status")
+            .then(response => response.json())
+            .then(data => {
+                if (data.elapsed_time) {
+                    document.getElementById("elapsed-time").textContent = data.elapsed_time;
+                }
+            })
+            .catch(error => console.error("Error fetching elapsed time:", error));
+    }
+
+    function updateScanProgress() {
+        fetch("/scan_status")
+            .then(response => response.json())
+            .then(data => {
+                const progress = data.progress;
+                const timeLeft = data.time_left;
+                const currentSubdomain = data.current_subdomain;
+                const subdomainsScanned = data.subdomains_scanned;
+                const domainsLeft = data.subdomains_left; 
+
+                const progressBar = document.getElementById("progress-bar");
+                progressBar.style.width = `${progress}%`;
+                document.getElementById("progress-text").textContent = `${progress.toFixed(0)}%`;
+
+                if (data.current_task) {
+                    document.getElementById("current-task").textContent = data.current_task;
+                }
+                
+                document.getElementById("current-subdomain").textContent = `Processing ${currentSubdomain}`;
+                document.getElementById("domains-scanned").textContent = subdomainsScanned;
+                document.getElementById("domains-left").textContent = domainsLeft;  
+                document.getElementById("estimated-time").textContent = timeLeft;
+
+                updateTaskStatus(data);
+
+                if (progress < 100) {
+                    setTimeout(updateScanProgress, 2000);
+                } else {
+                    window.location.href = "/results";
+                }
+            })
+            .catch(error => console.error("Error updating scan progress:", error));
+    }
+
+    function updateTaskStatus(data) {
+    const taskUpdates = [
+        { id: "subdomain-enumeration", progressStart: 5, progressEnd: 10, label: "Verifying Information" },
+        { id: "dns-resolution", progressStart: 10, progressEnd: 80, label: "Gathering Subdomain Data" },
+        { id: "vulnerability-analysis", progressStart: 80, progressEnd: 100, label: "Identifying Potential Takeovers" }
+    ];
+
+    taskUpdates.forEach(task => {
+        const element = document.getElementById(task.id);
+        const icon = element.querySelector("div");
+
+        if (data.progress >= task.progressStart && icon.querySelector("div") && !icon.innerHTML.includes("animate-spin")) {
+            icon.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-2 border-lime-500 border-t-transparent"></div>`;
+        }
+
+        if (data.progress >= task.progressEnd && icon.querySelector("svg") === null) {
+            icon.innerHTML = `
+                <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            `;
+        }
+    });
+}
+
+
+    function cancelScan() {
+        alert("This feature is not available for now.");
+    }
+
+    setInterval(updateElapsedTime, 1000);
+    document.addEventListener("DOMContentLoaded", updateScanProgress);
+</script>
+
+</body>
+</html>
+
